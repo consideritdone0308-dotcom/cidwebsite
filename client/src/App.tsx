@@ -5,38 +5,57 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import EmployeeDashboard from "./pages/EmployeeDashboard";
+import TimeTracker from "./pages/TimeTracker";
+import AdminPanel from "./pages/AdminPanel";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminTasks from "./pages/AdminTasks";
+import { useAuth } from "./_core/hooks/useAuth";
+import { getLoginUrl } from "./const";
+import { Loader2 } from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Route guards
+// ---------------------------------------------------------------------------
+function AdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (!user) { window.location.href = getLoginUrl(); return null; }
+  if (user.role !== "admin") return <NotFound />;
+  return <Component />;
+}
+
+function EmployeeRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (!user) { window.location.href = getLoginUrl(); return null; }
+  return <Component />;
+}
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
+      <Route path="/" component={Home} />
+      <Route path="/dashboard" component={() => <EmployeeRoute component={EmployeeDashboard} />} />
+      <Route path="/dashboard/time" component={() => <EmployeeRoute component={TimeTracker} />} />
+      <Route path="/admin" component={() => <AdminRoute component={AdminPanel} />} />
+      <Route path="/admin/tasks" component={() => <AdminRoute component={AdminTasks} />} />
+      <Route path="/admin/analytics" component={() => <AdminRoute component={AdminAnalytics} />} />
+      <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
-function App() {
+export default function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <Toaster />
+          <Toaster position="top-right" richColors />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
 }
-
-export default App;

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `timeLogs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`employeeId` int NOT NULL,\n\t`clockIn` bigint NOT NULL,\n\t`clockOut` bigint,\n\t`hoursWorked` float,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `timeLogs_id` PRIMARY KEY(`id`)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2yWB7bmxHcUBrFK.root --database UUvNfSmGfwtBDeauBX85wp --execute CREATE TABLE `timeLogs` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`employeeId` int NOT NULL,\n\t`clockIn` bigint NOT NULL,\n\t`clockOut` bigint,\n\t`hoursWorked` float,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `timeLogs_id` PRIMARY KEY(`id`)\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1685
+}

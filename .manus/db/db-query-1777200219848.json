@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `tasks` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`description` text NOT NULL,\n\t`status` enum('pending','completed') NOT NULL DEFAULT 'pending',\n\t`assignedToEmployeeId` int NOT NULL,\n\t`completedAt` timestamp,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `tasks_id` PRIMARY KEY(`id`)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2yWB7bmxHcUBrFK.root --database UUvNfSmGfwtBDeauBX85wp --execute CREATE TABLE `tasks` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`description` text NOT NULL,\n\t`status` enum('pending','completed') NOT NULL DEFAULT 'pending',\n\t`assignedToEmployeeId` int NOT NULL,\n\t`completedAt` timestamp,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `tasks_id` PRIMARY KEY(`id`)\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1688
+}
