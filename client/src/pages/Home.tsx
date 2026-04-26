@@ -80,11 +80,7 @@ export default function Home() {
   }, [user, loading, setLocation]);
 
   const handleGetStarted = () => {
-    if (user) {
-      setLocation(user.role === "admin" ? "/admin" : "/dashboard");
-    } else {
-      window.location.href = getLoginUrl();
-    }
+    window.location.href = "https://form.typeform.com/to/jbsO92e4";
   };
 
   return (
