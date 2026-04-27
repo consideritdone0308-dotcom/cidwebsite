@@ -17,25 +17,25 @@ import {
   Star,
   Instagram,
   Facebook,
+  Linkedin,
   Zap,
   Shield,
   Clock,
-  MapPin,
 } from "lucide-react";
 
 const services = [
-  { icon: Mail, title: "Massage Therapy 60/90", desc: "Customized therapeutic massage designed to reduce tension and support mobility." },
-  { icon: ClipboardList, title: "Chiropractic Care", desc: "Focused chiropractic care to restore alignment and improve mobility." },
-  { icon: Zap, title: "Recess Therapeutic Yoga", desc: "Movement-based sessions designed to improve mobility, stability, and breath awareness." },
-  { icon: Shield, title: "Muscle Stripping Therapy", desc: "Deep-tissue technique designed to release chronic tension and support muscular balance." },
-  { icon: Clock, title: "Community Recess", desc: "Accessible services and community-based wellness offerings, including sliding scale sessions." },
-  { icon: Database, title: "Corporate Recess", desc: "Corporate wellness experiences and team alignment sessions designed for well-being." },
+  { icon: Mail, title: "Email & Calendar Management", desc: "Inbox zero, scheduling, and follow-ups handled with precision." },
+  { icon: ClipboardList, title: "Task & Project Management", desc: "End-to-end project coordination so nothing slips through the cracks." },
+  { icon: Database, title: "Data Entry & Research", desc: "Accurate data processing and deep-dive research on demand." },
+  { icon: BarChart2, title: "Email Marketing", desc: "Campaigns crafted, sent, and optimised for maximum engagement." },
+  { icon: Share2, title: "Social Media Marketing", desc: "Content calendars, posting schedules, and community management." },
+  { icon: Palette, title: "Graphic Design", desc: "On-brand visuals for every platform, delivered fast." },
 ];
 
 const testimonials = [
-  { name: "Payton R.", role: "Client", quote: "Went for a couples massage and it was amazing! The place is super cute and very clean. The owners are knowledgeable and give a personalized experience.", rating: 5 },
-  { name: "Sharonda L.", role: "Client", quote: "Brain & Body Recess is amazing! When you walk in you just feel peace and calmness. My adjustment and massage was a healing experience.", rating: 5 },
-  { name: "Scott C.", role: "Client", quote: "Dr. Thomas, Parnisia, and their team offer a truly unique, holistic experience. Their attention to detail and time spent was beyond impressive.", rating: 5 },
+  { name: "Sarah Chen", role: "Founder, Bloom Studio", quote: "Consider It Done transformed how I run my business. I reclaimed 20 hours a week and finally have time to focus on growth.", rating: 5 },
+  { name: "Marcus Williams", role: "CEO, NovaTech", quote: "The team is incredibly professional and proactive. They anticipate my needs before I even ask. Absolutely worth every cent.", rating: 5 },
+  { name: "Priya Nair", role: "Marketing Director", quote: "From inbox management to campaign execution — they handle it all flawlessly. My stress levels have never been lower.", rating: 5 },
 ];
 
 export default function Home() {
@@ -49,8 +49,8 @@ export default function Home() {
     }
   }, [user, loading, setLocation]);
 
-  const handleBookNow = () => {
-    window.location.href = "https://www.brainandbodyrecess.com/book-now";
+  const handleGetStarted = () => {
+    window.location.href = "https://form.typeform.com/to/jbsO92e4";
   };
 
   return (
@@ -64,13 +64,12 @@ export default function Home() {
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <CheckCircle2 className="h-4.5 w-4.5 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-base tracking-tight">Brain & Body Recess</span>
+            <span className="font-semibold text-base tracking-tight">Consider It Done</span>
           </a>
 
           <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-muted-foreground">
             <a href="#services" className="hover:text-foreground transition-colors">Services</a>
             <a href="#testimonials" className="hover:text-foreground transition-colors">Testimonials</a>
-            <a href="https://www.brainandbodyrecess.com/about" className="hover:text-foreground transition-colors">About</a>
           </nav>
 
           <div className="flex items-center gap-3">
@@ -81,7 +80,7 @@ export default function Home() {
             ) : (
               <>
                 <Button variant="ghost" size="sm" onClick={() => window.location.href = getLoginUrl()}>Sign In</Button>
-                <Button size="sm" onClick={handleBookNow}>Book Now</Button>
+                <Button size="sm" onClick={handleGetStarted}>Get Started</Button>
               </>
             )}
           </div>
@@ -101,28 +100,28 @@ export default function Home() {
         <div className="container">
           <div className="max-w-3xl mx-auto text-center">
             <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-xs font-medium tracking-wide uppercase">
-              Integrated Wellness Care
+              Virtual Assistant Services
             </Badge>
 
             <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-[1.1] tracking-tight">
-              Restoration, Alignment,{" "}
+              Your Virtual Assistant,{" "}
               <span className="relative">
                 <span className="relative z-10" style={{
                   background: "linear-gradient(135deg, oklch(0.26 0.07 255) 0%, oklch(0.82 0.12 85) 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
-                }}>Mobility</span>
+                }}>Always Ready</span>
               </span>
             </h1>
 
             <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-              Integrated care for restoration, alignment, mobility, and nervous system restoration. Start your recess experience today.
+              Delegate your most time-consuming tasks to a dedicated virtual assistant team. Reclaim your time, reduce stress, and focus on what truly matters.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button size="lg" className="px-8 h-12 text-base shadow-lg" onClick={handleBookNow}>
-                Book Your First Recess <ArrowRight className="ml-2 h-4 w-4" />
+              <Button size="lg" className="px-8 h-12 text-base shadow-lg" onClick={handleGetStarted}>
+                Get Started Today <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button variant="outline" size="lg" className="px-8 h-12 text-base" asChild>
                 <a href="#services">Explore Services</a>
@@ -130,9 +129,9 @@ export default function Home() {
             </div>
 
             <div className="mt-12 flex items-center justify-center gap-8 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-secondary" /><span>Seattle, WA</span></div>
-              <div className="flex items-center gap-2"><Shield className="h-4 w-4 text-secondary" /><span>Holistic Care</span></div>
-              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-secondary" /><span>The Recess Method</span></div>
+              <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-secondary" /><span>Fast onboarding</span></div>
+              <div className="flex items-center gap-2"><Shield className="h-4 w-4 text-secondary" /><span>100% confidential</span></div>
+              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-secondary" /><span>Flexible hours</span></div>
             </div>
           </div>
         </div>
@@ -144,9 +143,9 @@ export default function Home() {
       <section id="services" className="py-24 bg-muted/30">
         <div className="container">
           <div className="text-center mb-14">
-            <Badge variant="outline" className="mb-4 text-xs font-medium uppercase tracking-wide">Our Services</Badge>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">Alignment, Mobility & Support</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">Each session is tailored to meet individual needs, whether you're seeking relief, restoration, or a consistent wellness routine.</p>
+            <Badge variant="outline" className="mb-4 text-xs font-medium uppercase tracking-wide">What We Do</Badge>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">Everything You Need, Done Right</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">From inbox management to creative design, our virtual assistants handle it all with expertise and care.</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -166,12 +165,12 @@ export default function Home() {
       {/* ================================================================
           TESTIMONIALS
       ================================================================ */}
-      <section id="testimonials" className="py-24 bg-muted/30">
+      <section id="testimonials" className="py-24">
         <div className="container">
           <div className="text-center mb-14">
             <Badge variant="outline" className="mb-4 text-xs font-medium uppercase tracking-wide">Testimonials</Badge>
             <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">What Our Clients Say</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">Trusted by our community for personalized and progressive care.</p>
+            <p className="text-muted-foreground max-w-xl mx-auto">Trusted by entrepreneurs and business leaders worldwide.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -204,10 +203,10 @@ export default function Home() {
               <div className="absolute bottom-0 right-0 w-64 h-64 rounded-full bg-secondary/20 blur-2xl" />
             </div>
             <div className="relative z-10">
-              <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground mb-4">Ready to Start Your Journey?</h2>
-              <p className="text-primary-foreground/75 mb-8 max-w-xl mx-auto">Care at Brain & Body Recess is personalized and progressive. Book your first session today.</p>
-              <Button size="lg" className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-10 h-12 text-base shadow-lg" onClick={handleBookNow}>
-                Book Now <ArrowRight className="ml-2 h-4 w-4" />
+              <h2 className="font-display text-3xl sm:text-4xl font-bold text-primary-foreground mb-4">Ready to Reclaim Your Time?</h2>
+              <p className="text-primary-foreground/75 mb-8 max-w-xl mx-auto">Join hundreds of leaders who have optimized their workflows with Consider It Done.</p>
+              <Button size="lg" className="bg-secondary text-secondary-foreground hover:bg-secondary/90 px-10 h-12 text-base shadow-lg" onClick={handleGetStarted}>
+                Get Started Now <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -224,28 +223,29 @@ export default function Home() {
               <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
                 <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold text-sm">Brain & Body Recess</span>
+              <span className="font-semibold text-sm">Consider It Done</span>
             </div>
 
-            <div className="text-sm text-muted-foreground text-center">
-              <p>3820 S Ferdinand St #201a, Seattle, WA 98118, USA</p>
-              <a href="mailto:info@recessnow.com" className="hover:text-foreground transition-colors">
-                info@recessnow.com
-              </a>
-            </div>
+            <nav className="flex items-center gap-8 text-sm text-muted-foreground">
+              <a href="#services" className="hover:text-foreground transition-colors">Services</a>
+              <a href="#testimonials" className="hover:text-foreground transition-colors">Testimonials</a>
+            </nav>
 
             <div className="flex items-center gap-4">
-              <a href="https://www.instagram.com/recessnow/" target="_blank" rel="noopener noreferrer" className="h-9 w-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all">
+              <a href="#" className="h-9 w-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all">
                 <Instagram className="h-4 w-4" />
               </a>
-              <a href="https://www.facebook.com/recessnow" target="_blank" rel="noopener noreferrer" className="h-9 w-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all">
+              <a href="#" className="h-9 w-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all">
                 <Facebook className="h-4 w-4" />
+              </a>
+              <a href="#" className="h-9 w-9 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all">
+                <Linkedin className="h-4 w-4" />
               </a>
             </div>
           </div>
 
           <div className="mt-8 pt-6 border-t border-border text-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Brain & Body Recess, Inc. All rights reserved.
+            © {new Date().getFullYear()} Consider It Done, Inc. All rights reserved.
           </div>
         </div>
       </footer>

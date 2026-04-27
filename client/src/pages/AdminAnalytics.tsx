@@ -12,7 +12,7 @@ import { useState } from "react";
 
 export default function AdminAnalytics() {
   return (
-    <AppLayout navItems={adminNav} title="Brain & Body Recess Admin">
+    <AppLayout navItems={adminNav} title="Admin Panel">
       <AnalyticsContent />
     </AppLayout>
   );

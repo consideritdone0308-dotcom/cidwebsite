@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { CheckCircle2, ClipboardList, Clock, LayoutDashboard, Timer, Play, Square } from "lucide-react";
+import { CheckCircle2, ClipboardList, Clock, LayoutDashboard, Timer, Play, Square, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { NavItem } from "@/components/AppLayout";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,12 +16,39 @@ const employeeNav: NavItem[] = [
 
 export default function EmployeeDashboard() {
   return (
-    <AppLayout navItems={employeeNav} title="Employee Dashboard">
+    <AppLayout navItems={employeeNav} title="Quo Dashboard">
       <div className="space-y-8 max-w-3xl">
+        <WixLoginBanner />
         <ShiftWidget />
         <TasksContent />
       </div>
     </AppLayout>
+  );
+}
+
+function WixLoginBanner() {
+  return (
+    <Card className="border-border shadow-sm bg-gradient-to-r from-blue-50 to-indigo-50">
+      <CardContent className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-sm">
+            <span className="font-bold text-blue-600">Wix</span>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-blue-900">External Access</p>
+            <p className="text-xs text-blue-700/80">Manage your brainandbodyrecess.com profile</p>
+          </div>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="bg-white hover:bg-blue-50 border-blue-200 text-blue-700 gap-2"
+          onClick={() => window.open("https://www.brainandbodyrecess.com", "_blank")}
+        >
+          Login to Wix <ExternalLink className="h-3.5 w-3.5" />
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -8,7 +8,7 @@ import { CheckCircle2, ClipboardList, Clock } from "lucide-react";
 
 export default function AdminTasks() {
   return (
-    <AppLayout navItems={adminNav} title="Brain & Body Recess Admin">
+    <AppLayout navItems={adminNav} title="Admin Panel">
       <AdminTasksContent />
     </AppLayout>
   );

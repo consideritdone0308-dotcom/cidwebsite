@@ -21,7 +21,7 @@ export const adminNav: NavItem[] = [
 
 export default function AdminPanel() {
   return (
-    <AppLayout navItems={adminNav} title="Brain & Body Recess Admin">
+    <AppLayout navItems={adminNav} title="Admin Panel">
       <AdminContent />
     </AppLayout>
   );
