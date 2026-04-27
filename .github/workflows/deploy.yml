@@ -20,8 +20,7 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
+        # Removed the version: 9 line to let it use the version in package.json
 
       - name: Set up Node
         uses: actions/setup-node@v4
