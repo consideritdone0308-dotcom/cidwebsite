@@ -3,10 +3,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { CheckCircle2, ClipboardList, Clock, LayoutDashboard, Timer } from "lucide-react";
+import { CheckCircle2, ClipboardList, Clock, LayoutDashboard, Timer, Play, Square } from "lucide-react";
 import { toast } from "sonner";
 import { NavItem } from "@/components/AppLayout";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
 
 const employeeNav: NavItem[] = [
   { icon: LayoutDashboard, label: "My Tasks", path: "/dashboard" },
@@ -15,9 +16,116 @@ const employeeNav: NavItem[] = [
 
 export default function EmployeeDashboard() {
   return (
-    <AppLayout navItems={employeeNav} title="Consider It Done">
-      <TasksContent />
+    <AppLayout navItems={employeeNav} title="Employee Dashboard">
+      <div className="space-y-8 max-w-3xl">
+        <ShiftWidget />
+        <TasksContent />
+      </div>
     </AppLayout>
+  );
+}
+
+function ShiftWidget() {
+  const { data: activeShift, isLoading: loadingShift } = trpc.shifts.active.useQuery();
+  const { data: activeSession, isLoading: loadingSession } = trpc.timeLogs.activeSession.useQuery(undefined, {
+    refetchInterval: 30000,
+  });
+  const utils = trpc.useUtils();
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const clockIn = trpc.timeLogs.clockIn.useMutation({
+    onSuccess: () => {
+      toast.success("Clocked in successfully!");
+      utils.timeLogs.activeSession.invalidate();
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
+
+  const clockOut = trpc.timeLogs.clockOut.useMutation({
+    onSuccess: () => {
+      toast.success("Clocked out successfully!");
+      utils.timeLogs.activeSession.invalidate();
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
+
+  if (loadingShift || loadingSession) return <Skeleton className="h-32 w-full rounded-2xl" />;
+
+  const formatDuration = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const sessionDuration = activeSession ? now - activeSession.clockIn : 0;
+
+  return (
+    <Card className="border-primary/20 bg-primary/5 shadow-sm overflow-hidden">
+      <CardContent className="p-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${activeSession ? "bg-emerald-100 animate-pulse" : "bg-muted"}`}>
+              <Timer className={`h-6 w-6 ${activeSession ? "text-emerald-600" : "text-muted-foreground"}`} />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg leading-tight">
+                {activeSession ? "Active Session" : activeShift ? "Ready for Shift" : "No Active Shift"}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {activeSession 
+                  ? `Started at ${new Date(activeSession.clockIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : activeShift 
+                    ? `Your shift: ${new Date(activeShift.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(activeShift.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : "You can only clock in during your scheduled shift."}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6">
+            {activeSession && (
+              <div className="text-right">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Current Time</p>
+                <p className="text-2xl font-mono font-bold text-primary">{formatDuration(sessionDuration)}</p>
+              </div>
+            )}
+
+            {!activeSession ? (
+              <Button 
+                size="lg" 
+                className="h-12 px-8 font-semibold shadow-md" 
+                disabled={!activeShift || clockIn.isPending}
+                onClick={() => clockIn.mutate()}
+              >
+                <Play className="mr-2 h-4 w-4 fill-current" />
+                Start Work
+              </Button>
+            ) : (
+              <Button 
+                size="lg" 
+                variant="destructive"
+                className="h-12 px-8 font-semibold shadow-md" 
+                disabled={clockOut.isPending}
+                onClick={() => clockOut.mutate({ logId: activeSession.id })}
+              >
+                <Square className="mr-2 h-4 w-4 fill-current" />
+                Stop Work
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -74,7 +182,7 @@ function TasksContent() {
   }
 
   return (
-    <div className="space-y-8 max-w-3xl">
+    <>
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
         <Card className="border-border shadow-sm">
@@ -172,6 +280,6 @@ function TasksContent() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }

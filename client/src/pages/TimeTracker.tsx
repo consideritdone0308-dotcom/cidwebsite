@@ -16,7 +16,7 @@ const employeeNav: NavItem[] = [
 
 export default function TimeTracker() {
   return (
-    <AppLayout navItems={employeeNav} title="Consider It Done">
+    <AppLayout navItems={employeeNav} title="Brain & Body Recess">
       <TimeTrackerContent />
     </AppLayout>
   );

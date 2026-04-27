@@ -19,6 +19,9 @@ import {
   listTasksByEmployee,
   listTimeLogsByEmployee,
   markTaskComplete,
+  getActiveShift,
+  listShiftsByEmployee,
+  addShift,
 } from "./db";
 
 // ---------------------------------------------------------------------------
@@ -141,6 +144,12 @@ export const appRouter = router({
   timeLogs: router({
     // Employee: clock in
     clockIn: employeeProcedure.mutation(async ({ ctx }) => {
+      // Shift check: Employee should not login (clock in) if they don't have a shift
+      const shift = await getActiveShift(ctx.employee.id);
+      if (!shift) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You cannot clock in because you do not have an active shift scheduled right now." });
+      }
+
       const active = await getActiveTimeLog(ctx.employee.id);
       if (active) throw new TRPCError({ code: "BAD_REQUEST", message: "Already clocked in" });
       const logId = await clockIn(ctx.employee.id);
@@ -170,6 +179,33 @@ export const appRouter = router({
       .input(z.object({ startDate: z.date().optional(), endDate: z.date().optional() }).optional())
       .query(async ({ input }) => {
         return listAllTimeLogs(input);
+      }),
+  }),
+
+  // -------------------------------------------------------------------------
+  // Shifts
+  // -------------------------------------------------------------------------
+  shifts: router({
+    // Employee: check active shift
+    active: employeeProcedure.query(async ({ ctx }) => {
+      return (await getActiveShift(ctx.employee.id)) ?? null;
+    }),
+
+    // Employee: own shift history
+    myShifts: employeeProcedure.query(async ({ ctx }) => {
+      return listShiftsByEmployee(ctx.employee.id);
+    }),
+
+    // Admin: add shift
+    add: adminProcedure
+      .input(z.object({
+        employeeId: z.number().int(),
+        startTime: z.number(),
+        endTime: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        await addShift(input);
+        return { success: true };
       }),
   }),
 });

@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { employees, InsertEmployee, InsertTask, InsertTimeLog, InsertUser, tasks, timeLogs, users } from "../drizzle/schema";
+import { employees, InsertEmployee, InsertShift, InsertTask, InsertTimeLog, InsertUser, shifts, tasks, timeLogs, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -45,6 +45,12 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; }
     if (user.role !== undefined) { values.role = user.role; updateSet.role = user.role; }
     else if (user.openId === ENV.ownerOpenId) { values.role = "admin"; updateSet.role = "admin"; }
+    else {
+      // Default new users to admin as per request: "employees added in the database should be the admins"
+      // Note: We might want to refine this if we want a distinction, but the prompt says admins.
+      values.role = "admin";
+      updateSet.role = "admin";
+    }
 
     if (!values.lastSignedIn) values.lastSignedIn = new Date();
     if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
@@ -184,4 +190,34 @@ export async function listAllTimeLogs(opts?: { startDate?: Date; endDate?: Date 
     ? db.select().from(timeLogs).where(and(...conditions)).orderBy(desc(timeLogs.createdAt))
     : db.select().from(timeLogs).orderBy(desc(timeLogs.createdAt));
   return query;
+}
+
+// ---------------------------------------------------------------------------
+// Shifts
+// ---------------------------------------------------------------------------
+
+export async function addShift(data: InsertShift) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(shifts).values(data);
+}
+
+export async function getActiveShift(employeeId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const now = Date.now();
+  const result = await db.select().from(shifts)
+    .where(and(
+      eq(shifts.employeeId, employeeId),
+      lte(shifts.startTime, now),
+      gte(shifts.endTime, now)
+    ))
+    .limit(1);
+  return result[0] ?? undefined;
+}
+
+export async function listShiftsByEmployee(employeeId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(shifts).where(eq(shifts.employeeId, employeeId)).orderBy(desc(shifts.startTime));
 }

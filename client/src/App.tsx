@@ -21,6 +21,7 @@ function AdminRoute({ component: Component }: { component: React.ComponentType }
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!user) { window.location.href = getLoginUrl(); return null; }
+  // Allow admins only
   if (user.role !== "admin") return <NotFound />;
   return <Component />;
 }
@@ -29,6 +30,8 @@ function EmployeeRoute({ component: Component }: { component: React.ComponentTyp
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!user) { window.location.href = getLoginUrl(); return null; }
+  // Employees added in database are admins, so both can access dashboard
+  if (user.role !== "admin" && user.role !== "employee") return <NotFound />;
   return <Component />;
 }
 

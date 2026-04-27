@@ -15,7 +15,7 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "admin", "employee"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -68,3 +68,17 @@ export const timeLogs = mysqlTable("timeLogs", {
 
 export type TimeLog = typeof timeLogs.$inferSelect;
 export type InsertTimeLog = typeof timeLogs.$inferInsert;
+
+// ---------------------------------------------------------------------------
+// Shifts — scheduled working hours for employees
+// ---------------------------------------------------------------------------
+export const shifts = mysqlTable("shifts", {
+  id: int("id").autoincrement().primaryKey(),
+  employeeId: int("employeeId").notNull(),
+  startTime: bigint("startTime", { mode: "number" }).notNull(), // UTC ms
+  endTime: bigint("endTime", { mode: "number" }).notNull(),   // UTC ms
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Shift = typeof shifts.$inferSelect;
+export type InsertShift = typeof shifts.$inferInsert;
