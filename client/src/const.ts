@@ -2,13 +2,9 @@ export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
 // Generate login URL at runtime so redirect URI reflects the current origin.
 export const getLoginUrl = () => {
-  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
-  const appId = import.meta.env.VITE_APP_ID;
-
-  if (!oauthPortalUrl || !appId) {
-    console.error("Missing VITE_OAUTH_PORTAL_URL or VITE_APP_ID environment variables");
-    return "#error-missing-config";
-  }
+  // Use environment variables if available, otherwise fallback to defaults
+  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL || "https://oauth.manus.im";
+  const appId = import.meta.env.VITE_APP_ID || "cidwebsite-gwen0407";
 
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
   const state = btoa(redirectUri);
@@ -18,8 +14,10 @@ export const getLoginUrl = () => {
     url = new URL(`${oauthPortalUrl}/app-auth`);
   } catch (e) {
     console.error("Invalid VITE_OAUTH_PORTAL_URL:", oauthPortalUrl);
-    return "#error-invalid-url";
+    // Fallback to the standard Manus OAuth portal if the provided URL is invalid
+    url = new URL("https://oauth.manus.im/app-auth");
   }
+
   url.searchParams.set("appId", appId);
   url.searchParams.set("redirectUri", redirectUri);
   url.searchParams.set("state", state);

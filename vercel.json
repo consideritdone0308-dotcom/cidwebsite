@@ -5,8 +5,8 @@
   "outputDirectory": "client/dist",
   "rewrites": [
     {
-      "source": "/api/trpc/(.*)",
-      "destination": "/api/trpc"
+      "source": "/api/(.*)",
+      "destination": "/api"
     },
     {
       "source": "/(.*)",
