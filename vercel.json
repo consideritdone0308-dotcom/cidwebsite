@@ -3,7 +3,7 @@
   "buildCommand": "pnpm install && pnpm build",
   "outputDirectory": "client/dist",
   "functions": {
-    "api/index.js": {
+    "api/index.ts": {
       "memory": 1024,
       "maxDuration": 30
     }
@@ -11,7 +11,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "handle": "filesystem"
