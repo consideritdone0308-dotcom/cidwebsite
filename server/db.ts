@@ -9,14 +9,18 @@ export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
       let url = process.env.DATABASE_URL;
+      console.log("[Database] Initializing connection to:", url.split("@")[1] || "unknown host");
+      
       // Ensure SSL is enabled for cloud databases like TiDB
       if (url.includes("tidbcloud.com") && !url.includes("ssl=")) {
         const separator = url.includes("?") ? "&" : "?";
         url += `${separator}ssl={"rejectUnauthorized":true}`;
       }
+      
       _db = drizzle(url);
+      console.log("[Database] Drizzle instance created");
     } catch (error) {
-      console.error("[Database] Failed to initialize connection:", error);
+      console.error("[Database] Critical initialization error:", error);
       _db = null;
     }
   }

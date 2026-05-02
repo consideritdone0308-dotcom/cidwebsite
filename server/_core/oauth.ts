@@ -33,15 +33,19 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
       
-      console.log("[OAuth] Upserting user to database...");
-      await db.upsertUser({
-        openId: userInfo.openId,
-        name: userInfo.name || null,
-        email: userInfo.email ?? null,
-        loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-        lastSignedIn: new Date(),
-      });
-      console.log("[OAuth] User upserted successfully");
+      console.log("[OAuth] Attempting to upsert user to database...");
+      try {
+        await db.upsertUser({
+          openId: userInfo.openId,
+          name: userInfo.name || null,
+          email: userInfo.email ?? null,
+          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+          lastSignedIn: new Date(),
+        });
+        console.log("[OAuth] User upserted successfully");
+      } catch (dbError) {
+        console.warn("[OAuth] Database upsert failed, but continuing login flow:", dbError);
+      }
       
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {
         name: userInfo.name || "",
