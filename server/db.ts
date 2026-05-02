@@ -1,239 +1,223 @@
-import { and, desc, eq, gte, lte } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
-import { employees, InsertEmployee, InsertShift, InsertTask, InsertTimeLog, InsertUser, shifts, tasks, timeLogs, users } from "../drizzle/schema";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { eq, and, isNull } from "drizzle-orm";
+import * as schema from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import bcrypt from "bcryptjs";
 
+// ---------------------------------------------------------------------------
+// Database connection
+// ---------------------------------------------------------------------------
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      let url = process.env.DATABASE_URL;
-      console.log("[Database] Initializing connection to:", url.split("@")[1] || "unknown host");
-      
-      // Ensure SSL is enabled for cloud databases like TiDB
-      if (url.includes("tidbcloud.com") && !url.includes("ssl=")) {
-        const separator = url.includes("?") ? "&" : "?";
-        url += `${separator}ssl={"rejectUnauthorized":true}`;
-      }
-      
-      _db = drizzle(url);
-      console.log("[Database] Drizzle instance created");
-    } catch (error) {
-      console.error("[Database] Critical initialization error:", error);
-      _db = null;
-    }
+  if (_db) return _db;
+  if (!ENV.databaseUrl) {
+    console.warn("[Database] DATABASE_URL is not set");
+    return null;
   }
+  const sql = neon(ENV.databaseUrl);
+  _db = drizzle(sql, { schema });
   return _db;
 }
 
 // ---------------------------------------------------------------------------
-// Users
+// User helpers
 // ---------------------------------------------------------------------------
-
-export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) throw new Error("User openId is required for upsert");
-
+export async function getUserByEmail(email: string): Promise<schema.User | null> {
   const db = await getDb();
-  if (!db) { console.warn("[Database] Cannot upsert user: database not available"); return; }
-
-  try {
-    const values: InsertUser = { openId: user.openId };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; }
-    if (user.role !== undefined) { values.role = user.role; updateSet.role = user.role; }
-    else if (user.openId === ENV.ownerOpenId) { values.role = "admin"; updateSet.role = "admin"; }
-
-    if (!values.lastSignedIn) values.lastSignedIn = new Date();
-    if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
-  } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
-  }
+  if (!db) return null;
+  const rows = await db.select().from(schema.users).where(eq(schema.users.email, email.toLowerCase())).limit(1);
+  return rows[0] ?? null;
 }
 
-export async function getUserByOpenId(openId: string) {
+export async function getUserById(id: number): Promise<schema.User | null> {
   const db = await getDb();
-  if (!db) { console.warn("[Database] Cannot get user: database not available"); return undefined; }
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+  if (!db) return null;
+  const rows = await db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1);
+  return rows[0] ?? null;
 }
 
-// ---------------------------------------------------------------------------
-// Employees
-// ---------------------------------------------------------------------------
-
-export async function addEmployee(data: InsertEmployee) {
+export async function createUser(data: {
+  email: string;
+  password: string;
+  name?: string;
+  role?: "user" | "admin" | "employee";
+}): Promise<schema.User> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(employees).values(data);
+  const passwordHash = await bcrypt.hash(data.password, 12);
+  const rows = await db
+    .insert(schema.users)
+    .values({
+      email: data.email.toLowerCase(),
+      passwordHash,
+      name: data.name ?? null,
+      role: data.role ?? "user",
+    })
+    .returning();
+  return rows[0];
 }
 
-export async function listEmployees() {
+export async function verifyPassword(user: schema.User, password: string): Promise<boolean> {
+  return bcrypt.compare(password, user.passwordHash);
+}
+
+export async function updateUserLastSignedIn(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(schema.users).set({ lastSignedIn: new Date() }).where(eq(schema.users.id, id));
+}
+
+// ---------------------------------------------------------------------------
+// Employee helpers
+// ---------------------------------------------------------------------------
+export async function addEmployee(email: string, name?: string): Promise<schema.Employee> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const rows = await db.insert(schema.employees).values({ email: email.toLowerCase(), name: name ?? null }).returning();
+  return rows[0];
+}
+
+export async function listEmployees(): Promise<schema.Employee[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(employees).orderBy(desc(employees.createdAt));
+  return db.select().from(schema.employees);
 }
 
-export async function getEmployeeByEmail(email: string) {
+export async function getEmployeeByUserId(userId: number): Promise<schema.Employee | null> {
   const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(employees).where(eq(employees.email, email)).limit(1);
-  return result[0] ?? undefined;
+  if (!db) return null;
+  const rows = await db.select().from(schema.employees).where(eq(schema.employees.userId, userId)).limit(1);
+  return rows[0] ?? null;
 }
 
-export async function getEmployeeByUserId(userId: number) {
+export async function getEmployeeByEmail(email: string): Promise<schema.Employee | null> {
   const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(employees).where(eq(employees.userId, userId)).limit(1);
-  return result[0] ?? undefined;
+  if (!db) return null;
+  const rows = await db.select().from(schema.employees).where(eq(schema.employees.email, email.toLowerCase())).limit(1);
+  return rows[0] ?? null;
 }
 
-export async function linkEmployeeToUser(employeeId: number, userId: number) {
+export async function linkEmployeeToUser(employeeId: number, userId: number): Promise<void> {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.update(employees).set({ userId }).where(eq(employees.id, employeeId));
+  if (!db) return;
+  await db.update(schema.employees).set({ userId }).where(eq(schema.employees.id, employeeId));
 }
 
 // ---------------------------------------------------------------------------
-// Tasks
+// Task helpers
 // ---------------------------------------------------------------------------
-
-export async function assignTask(data: InsertTask) {
+export async function assignTask(employeeId: number, description: string): Promise<schema.Task> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(tasks).values(data);
-  return result;
+  const rows = await db.insert(schema.tasks).values({ assignedToEmployeeId: employeeId, description }).returning();
+  return rows[0];
 }
 
-export async function listTasksByEmployee(employeeId: number) {
+export async function listTasksByEmployee(employeeId: number): Promise<schema.Task[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(tasks).where(eq(tasks.assignedToEmployeeId, employeeId)).orderBy(desc(tasks.createdAt));
+  return db.select().from(schema.tasks).where(eq(schema.tasks.assignedToEmployeeId, employeeId));
 }
 
-export async function listAllTasks(opts?: { startDate?: Date; endDate?: Date }) {
+export async function listAllTasks(): Promise<schema.Task[]> {
   const db = await getDb();
   if (!db) return [];
-  const conditions = [];
-  if (opts?.startDate) conditions.push(gte(tasks.createdAt, opts.startDate));
-  if (opts?.endDate) conditions.push(lte(tasks.createdAt, opts.endDate));
-  const query = conditions.length > 0
-    ? db.select().from(tasks).where(and(...conditions)).orderBy(desc(tasks.createdAt))
-    : db.select().from(tasks).orderBy(desc(tasks.createdAt));
-  return query;
+  return db.select().from(schema.tasks);
 }
 
-export async function markTaskComplete(taskId: number) {
+export async function markTaskComplete(taskId: number): Promise<void> {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.update(tasks).set({ status: "completed", completedAt: new Date() }).where(eq(tasks.id, taskId));
+  if (!db) return;
+  await db.update(schema.tasks).set({ status: "completed", completedAt: new Date() }).where(eq(schema.tasks.id, taskId));
 }
 
 // ---------------------------------------------------------------------------
-// Time Logs
+// Time Log helpers
 // ---------------------------------------------------------------------------
-
 export async function clockIn(employeeId: number): Promise<number> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const now = Date.now();
-  const result = await db.insert(timeLogs).values({ employeeId, clockIn: now });
-  // Return the inserted id
-  const inserted = result as unknown as { insertId: number };
-  return inserted.insertId;
+  const rows = await db.insert(schema.timeLogs).values({ employeeId, clockIn: Date.now() }).returning();
+  return rows[0].id;
 }
 
-export async function clockOut(logId: number) {
+export async function clockOut(logId: number): Promise<void> {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  const rows = await db.select().from(timeLogs).where(eq(timeLogs.id, logId)).limit(1);
-  if (!rows[0]) throw new Error("Time log not found");
+  if (!db) return;
+  const rows = await db.select().from(schema.timeLogs).where(eq(schema.timeLogs.id, logId)).limit(1);
   const log = rows[0];
-  const now = Date.now();
-  const hoursWorked = (now - log.clockIn) / 1000 / 3600;
-  await db.update(timeLogs).set({ clockOut: now, hoursWorked: parseFloat(hoursWorked.toFixed(4)) }).where(eq(timeLogs.id, logId));
+  if (!log) return;
+  const clockOutMs = Date.now();
+  const hoursWorked = (clockOutMs - log.clockIn) / 3_600_000;
+  await db.update(schema.timeLogs).set({ clockOut: clockOutMs, hoursWorked }).where(eq(schema.timeLogs.id, logId));
 }
 
-export async function getActiveTimeLog(employeeId: number) {
+export async function getActiveTimeLog(employeeId: number): Promise<schema.TimeLog | null> {
   const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(timeLogs)
-    .where(and(eq(timeLogs.employeeId, employeeId), eq(timeLogs.clockOut as unknown as typeof timeLogs.clockOut, null as unknown as number)))
+  if (!db) return null;
+  const rows = await db
+    .select()
+    .from(schema.timeLogs)
+    .where(and(eq(schema.timeLogs.employeeId, employeeId), isNull(schema.timeLogs.clockOut)))
     .limit(1);
-  return result[0] ?? undefined;
+  return rows[0] ?? null;
 }
 
-export async function listTimeLogsByEmployee(employeeId: number) {
+export async function listTimeLogsByEmployee(employeeId: number): Promise<schema.TimeLog[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(timeLogs).where(eq(timeLogs.employeeId, employeeId)).orderBy(desc(timeLogs.createdAt));
+  return db.select().from(schema.timeLogs).where(eq(schema.timeLogs.employeeId, employeeId));
 }
 
-export async function listAllTimeLogs(opts?: { startDate?: Date; endDate?: Date }) {
+export async function listAllTimeLogs(filter?: { startDate?: Date; endDate?: Date }): Promise<schema.TimeLog[]> {
   const db = await getDb();
   if (!db) return [];
-  const conditions = [];
-  if (opts?.startDate) conditions.push(gte(timeLogs.createdAt, opts.startDate));
-  if (opts?.endDate) conditions.push(lte(timeLogs.createdAt, opts.endDate));
-  const query = conditions.length > 0
-    ? db.select().from(timeLogs).where(and(...conditions)).orderBy(desc(timeLogs.createdAt))
-    : db.select().from(timeLogs).orderBy(desc(timeLogs.createdAt));
-  return query;
+  return db.select().from(schema.timeLogs);
 }
 
 // ---------------------------------------------------------------------------
-// Shifts
+// Shift helpers
 // ---------------------------------------------------------------------------
-
-export async function addShift(data: InsertShift) {
+export async function addShift(data: { employeeId: number; dayOfWeek: number; startTime: string; endTime: string }): Promise<schema.Shift> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(shifts).values(data);
+  const rows = await db.insert(schema.shifts).values(data).returning();
+  return rows[0];
 }
 
-export async function listShiftsByEmployee(employeeId: number) {
+export async function listShiftsByEmployee(employeeId: number): Promise<schema.Shift[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(shifts).where(eq(shifts.employeeId, employeeId));
+  return db.select().from(schema.shifts).where(eq(schema.shifts.employeeId, employeeId));
 }
 
-export async function deleteShift(shiftId: number) {
+export async function deleteShift(shiftId: number): Promise<void> {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  await db.delete(shifts).where(eq(shifts.id, shiftId));
+  if (!db) return;
+  const { ne } = await import("drizzle-orm");
+  await db.delete(schema.shifts).where(eq(schema.shifts.id, shiftId));
 }
 
 export async function hasActiveShift(employeeId: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
-
   const now = new Date();
   const dayOfWeek = now.getDay();
   const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-
-  const employeeShifts = await db.select().from(shifts).where(
-    and(
-      eq(shifts.employeeId, employeeId),
-      eq(shifts.dayOfWeek, dayOfWeek)
+  const { and: andOp, lte, gte } = await import("drizzle-orm");
+  const rows = await db
+    .select()
+    .from(schema.shifts)
+    .where(
+      andOp(
+        eq(schema.shifts.employeeId, employeeId),
+        eq(schema.shifts.dayOfWeek, dayOfWeek),
+        lte(schema.shifts.startTime, currentTime),
+        gte(schema.shifts.endTime, currentTime)
+      )
     )
-  );
-
-  return employeeShifts.some(shift => {
-    return currentTime >= shift.startTime && currentTime <= shift.endTime;
-  });
+    .limit(1);
+  return rows.length > 0;
 }

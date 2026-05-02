@@ -5,13 +5,13 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import Login from "./pages/Login";
 import EmployeeDashboard from "./pages/EmployeeDashboard";
 import TimeTracker from "./pages/TimeTracker";
 import AdminPanel from "./pages/AdminPanel";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminTasks from "./pages/AdminTasks";
 import { useAuth } from "./_core/hooks/useAuth";
-import { getLoginUrl } from "./const";
 import { Loader2 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -20,8 +20,7 @@ import { Loader2 } from "lucide-react";
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-  if (!user) { window.location.href = getLoginUrl(); return null; }
-  // Allow admins only
+  if (!user) { window.location.href = "/login"; return null; }
   if (user.role !== "admin") return <NotFound />;
   return <Component />;
 }
@@ -29,8 +28,7 @@ function AdminRoute({ component: Component }: { component: React.ComponentType }
 function EmployeeRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-  if (!user) { window.location.href = getLoginUrl(); return null; }
-  // Employees added in database are admins, so both can access dashboard
+  if (!user) { window.location.href = "/login"; return null; }
   if (user.role !== "admin" && user.role !== "employee") return <NotFound />;
   return <Component />;
 }
@@ -39,6 +37,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
       <Route path="/dashboard" component={() => <EmployeeRoute component={EmployeeDashboard} />} />
       <Route path="/dashboard/time" component={() => <EmployeeRoute component={TimeTracker} />} />
       <Route path="/admin" component={() => <AdminRoute component={AdminPanel} />} />
