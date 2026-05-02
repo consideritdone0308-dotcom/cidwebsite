@@ -1,8 +1,4 @@
 import express from "express";
-
-const healthApp = express();
-healthApp.get("/api/health", (req, res) => res.send("OK"));
-
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "../server/_core/oauth";
 import { registerStorageProxy } from "../server/_core/storageProxy";
