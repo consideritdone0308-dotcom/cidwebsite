@@ -11,7 +11,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { SignJWT, jwtVerify } from "jose";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import type * as express from "express";
+import type { ServerResponse } from "http";
 
 // ---------------------------------------------------------------------------
 // JWT helpers
@@ -35,18 +35,24 @@ export async function verifyToken(token: string): Promise<{ userId: number; emai
   }
 }
 
-function setCookie(res: express.Response, token: string) {
-  res.cookie(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: ENV.isProduction,
-    sameSite: "lax",
-    path: "/",
-    maxAge: ONE_YEAR_MS,
-  });
+function buildCookieString(name: string, value: string, maxAge: number): string {
+  const parts = [
+    `${name}=${encodeURIComponent(value)}`,
+    `Max-Age=${Math.floor(maxAge / 1000)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+  ];
+  if (ENV.isProduction) parts.push("Secure");
+  return parts.join("; ");
 }
 
-function clearCookieFromRes(res: express.Response) {
-  res.clearCookie(COOKIE_NAME, { path: "/" });
+function setCookie(res: ServerResponse, token: string) {
+  res.setHeader("Set-Cookie", buildCookieString(COOKIE_NAME, token, ONE_YEAR_MS));
+}
+
+function clearCookieFromRes(res: ServerResponse) {
+  res.setHeader("Set-Cookie", buildCookieString(COOKIE_NAME, "", 0));
 }
 
 // ---------------------------------------------------------------------------
@@ -80,7 +86,7 @@ export const authRouter = router({
 
       const user = await db.createUser({ email: input.email, password: input.password, name: input.name, role });
       const token = await signToken({ userId: user.id, email: user.email, role: user.role });
-      setCookie(ctx.res, token);
+      setCookie(ctx.res as unknown as ServerResponse, token);
       return { id: user.id, email: user.email, name: user.name, role: user.role };
     }),
 
@@ -110,13 +116,13 @@ export const authRouter = router({
       }
 
       const token = await signToken({ userId: user.id, email: user.email, role: user.role });
-      setCookie(ctx.res, token);
+      setCookie(ctx.res as unknown as ServerResponse, token);
       return { id: user.id, email: user.email, name: user.name, role: user.role };
     }),
 
   /** Logout — clear cookie */
   logout: authedProcedure.mutation(async ({ ctx }) => {
-    clearCookieFromRes(ctx.res);
+    clearCookieFromRes(ctx.res as unknown as ServerResponse);
     return { success: true };
   }),
 });

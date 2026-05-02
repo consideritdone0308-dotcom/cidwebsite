@@ -4,11 +4,10 @@ import { verifyToken } from "./auth";
 import * as db from "../db";
 import { COOKIE_NAME } from "@shared/const";
 import { parse as parseCookies } from "cookie";
-import type * as express from "express";
 
 export type TrpcContext = {
-  req: express.Request;
-  res: express.Response;
+  req: CreateExpressContextOptions["req"];
+  res: CreateExpressContextOptions["res"];
   user: User | null;
 };
 
@@ -17,8 +16,8 @@ export async function createContext(
 ): Promise<TrpcContext> {
   let user: User | null = null;
   try {
-    const req = opts.req as express.Request;
-    const cookieHeader = (req.headers?.cookie as string) ?? "";
+    const headers = opts.req.headers as Record<string, string | undefined>;
+    const cookieHeader = headers["cookie"] ?? "";
     const cookies = parseCookies(cookieHeader);
     const token = cookies[COOKIE_NAME];
     if (token) {
@@ -30,5 +29,5 @@ export async function createContext(
   } catch {
     user = null;
   }
-  return { req: opts.req as express.Request, res: opts.res as express.Response, user };
+  return { req: opts.req, res: opts.res, user };
 }
