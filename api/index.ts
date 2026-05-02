@@ -16,7 +16,7 @@ app.use(
 );
 
 // 404 fallback for unmatched API routes
-app.use("/api/*", (_req, res) => {
+app.use("/api/*", (_req: express.Request, res: express.Response) => {
   res.status(404).json({ error: "API route not found" });
 });
 

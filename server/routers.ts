@@ -70,6 +70,35 @@ export const appRouter = router({
       }),
   }),
   // -------------------------------------------------------------------------
+  // Shifts (employee-facing + admin)
+  // -------------------------------------------------------------------------
+  shifts: router({
+    // Employee: get their active shift for today
+    active: employeeProcedure.query(async ({ ctx }) => {
+      const shifts = await listShiftsByEmployee(ctx.employee.id);
+      const today = new Date().getDay(); // 0=Sun, 6=Sat
+      return shifts.find((s) => s.dayOfWeek === today) ?? null;
+    }),
+    // Employee: list all their shifts
+    list: employeeProcedure.query(async ({ ctx }) => {
+      return listShiftsByEmployee(ctx.employee.id);
+    }),
+    // Admin: add a shift
+    add: adminProcedure
+      .input(
+        z.object({
+          employeeId: z.number().int(),
+          dayOfWeek: z.number().int().min(0).max(6),
+          startTime: z.string().regex(/^\d{2}:\d{2}$/),
+          endTime: z.string().regex(/^\d{2}:\d{2}$/),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await addShift(input);
+        return { success: true };
+      }),
+  }),
+  // -------------------------------------------------------------------------
   // Tasks
   // -------------------------------------------------------------------------
   tasks: router({

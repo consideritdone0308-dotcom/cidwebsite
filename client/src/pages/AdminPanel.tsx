@@ -41,7 +41,7 @@ function AdminContent() {
       utils.employees.list.invalidate();
       toast.success("Employee added successfully!");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e: { message: string }) => toast.error(e.message),
   });
 
   // Assign task form
@@ -53,35 +53,36 @@ function AdminContent() {
       setSelectedEmpId("");
       toast.success("Task assigned successfully!");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e: { message: string }) => toast.error(e.message),
   });
 
   // Add shift form
   const [shiftEmpId, setShiftEmpId] = useState<string>("");
+  const [shiftDayOfWeek, setShiftDayOfWeek] = useState<string>("1");
   const [shiftStartTime, setShiftStartTime] = useState("");
   const [shiftEndTime, setShiftEndTime] = useState("");
   const addShiftMutation = trpc.shifts.add.useMutation({
     onSuccess: () => {
       setShiftEmpId("");
+      setShiftDayOfWeek("1");
       setShiftStartTime("");
       setShiftEndTime("");
       toast.success("Shift scheduled successfully!");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e: { message: string }) => toast.error(e.message),
   });
 
   const handleAddShift = () => {
     if (!shiftEmpId || !shiftStartTime || !shiftEndTime) return;
-    const startDate = new Date(shiftStartTime);
-    const endDate = new Date(shiftEndTime);
-    if (endDate <= startDate) {
+    if (shiftEndTime <= shiftStartTime) {
       toast.error("End time must be after start time");
       return;
     }
     addShiftMutation.mutate({
       employeeId: parseInt(shiftEmpId),
-      startTime: startDate.getTime(),
-      endTime: endDate.getTime(),
+      dayOfWeek: parseInt(shiftDayOfWeek),
+      startTime: shiftStartTime,
+      endTime: shiftEndTime,
     });
   };
 
@@ -215,20 +216,33 @@ function AdminContent() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="shift-start" className="text-sm font-medium">Start Time</Label>
+              <Label className="text-sm font-medium">Day of Week</Label>
+              <Select value={shiftDayOfWeek} onValueChange={setShiftDayOfWeek}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Select day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map((day, i) => (
+                    <SelectItem key={i} value={String(i)}>{day}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="shift-start" className="text-sm font-medium">Start Time (HH:MM)</Label>
               <Input
                 id="shift-start"
-                type="datetime-local"
+                type="time"
                 value={shiftStartTime}
                 onChange={(e) => setShiftStartTime(e.target.value)}
                 className="h-10"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="shift-end" className="text-sm font-medium">End Time</Label>
+              <Label htmlFor="shift-end" className="text-sm font-medium">End Time (HH:MM)</Label>
               <Input
                 id="shift-end"
-                type="datetime-local"
+                type="time"
                 value={shiftEndTime}
                 onChange={(e) => setShiftEndTime(e.target.value)}
                 className="h-10"

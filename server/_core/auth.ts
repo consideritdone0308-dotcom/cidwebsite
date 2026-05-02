@@ -11,7 +11,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { SignJWT, jwtVerify } from "jose";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import type { Request, Response } from "express";
+import type * as express from "express";
 
 // ---------------------------------------------------------------------------
 // JWT helpers
@@ -35,13 +35,18 @@ export async function verifyToken(token: string): Promise<{ userId: number; emai
   }
 }
 
-export function getCookieOptions(req: Request) {
-  return {
+function setCookie(res: express.Response, token: string) {
+  res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     secure: ENV.isProduction,
-    sameSite: "lax" as const,
+    sameSite: "lax",
     path: "/",
-  };
+    maxAge: ONE_YEAR_MS,
+  });
+}
+
+function clearCookieFromRes(res: express.Response) {
+  res.clearCookie(COOKIE_NAME, { path: "/" });
 }
 
 // ---------------------------------------------------------------------------
@@ -75,7 +80,7 @@ export const authRouter = router({
 
       const user = await db.createUser({ email: input.email, password: input.password, name: input.name, role });
       const token = await signToken({ userId: user.id, email: user.email, role: user.role });
-      (ctx.res as Response).cookie(COOKIE_NAME, token, { ...getCookieOptions(ctx.req as Request), maxAge: ONE_YEAR_MS });
+      setCookie(ctx.res, token);
       return { id: user.id, email: user.email, name: user.name, role: user.role };
     }),
 
@@ -105,13 +110,13 @@ export const authRouter = router({
       }
 
       const token = await signToken({ userId: user.id, email: user.email, role: user.role });
-      (ctx.res as Response).cookie(COOKIE_NAME, token, { ...getCookieOptions(ctx.req as Request), maxAge: ONE_YEAR_MS });
+      setCookie(ctx.res, token);
       return { id: user.id, email: user.email, name: user.name, role: user.role };
     }),
 
   /** Logout — clear cookie */
   logout: authedProcedure.mutation(async ({ ctx }) => {
-    (ctx.res as Response).clearCookie(COOKIE_NAME, { path: "/" });
+    clearCookieFromRes(ctx.res);
     return { success: true };
   }),
 });
