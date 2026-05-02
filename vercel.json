@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "framework": "vite",
   "buildCommand": "pnpm install && pnpm build",
   "outputDirectory": "client/dist",
   "rewrites": [
@@ -9,7 +8,7 @@
       "destination": "/api/index.js"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
