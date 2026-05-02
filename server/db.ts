@@ -8,9 +8,15 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      let url = process.env.DATABASE_URL;
+      // Ensure SSL is enabled for cloud databases like TiDB
+      if (url.includes("tidbcloud.com") && !url.includes("ssl=")) {
+        const separator = url.includes("?") ? "&" : "?";
+        url += `${separator}ssl={"rejectUnauthorized":true}`;
+      }
+      _db = drizzle(url);
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      console.error("[Database] Failed to initialize connection:", error);
       _db = null;
     }
   }
