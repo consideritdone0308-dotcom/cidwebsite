@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, lte, gte } from "drizzle-orm";
 import * as schema from "../drizzle/schema";
 import { ENV } from "./_core/env";
 import bcrypt from "bcryptjs";
@@ -205,7 +205,6 @@ export async function hasActiveShift(employeeId: number): Promise<boolean> {
   const now = new Date();
   const dayOfWeek = now.getDay();
   const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-  const { lte, gte } = await import("drizzle-orm");
   const rows = await db
     .select()
     .from(schema.shifts)
