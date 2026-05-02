@@ -10,6 +10,32 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
+  app.get("/api/debug", async (req: Request, res: Response) => {
+    const diagnostics = {
+      env: {
+        VITE_APP_ID: process.env.VITE_APP_ID ? "PRESENT" : "MISSING",
+        JWT_SECRET: process.env.JWT_SECRET ? "PRESENT" : "MISSING",
+        DATABASE_URL: process.env.DATABASE_URL ? "PRESENT" : "MISSING",
+        OAUTH_SERVER_URL: process.env.OAUTH_SERVER_URL ? "PRESENT" : "MISSING",
+        NODE_ENV: process.env.NODE_ENV,
+      },
+      database: "testing...",
+    };
+
+    try {
+      const dbInstance = await db.getDb();
+      if (dbInstance) {
+        diagnostics.database = "INITIALIZED";
+      } else {
+        diagnostics.database = "FAILED_TO_INITIALIZE";
+      }
+    } catch (e) {
+      diagnostics.database = `ERROR: ${e instanceof Error ? e.message : String(e)}`;
+    }
+
+    res.json(diagnostics);
+  });
+
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");
