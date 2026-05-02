@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
+import { useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -13,6 +14,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminTasks from "./pages/AdminTasks";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 // ---------------------------------------------------------------------------
 // Route guards
@@ -20,6 +22,14 @@ import { Loader2 } from "lucide-react";
 
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, loading } = useAuth();
+  const [, navigate] = useLocation();
+
+  // Handle redirects with useEffect to avoid calling hooks after early returns
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
@@ -30,8 +40,12 @@ function AdminRoute({ component: Component }: { component: React.ComponentType }
   }
 
   if (!user) {
-    window.location.href = "/login";
-    return null;
+    // Return loading state while redirect happens
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   if (user.role !== "admin") {
@@ -43,6 +57,14 @@ function AdminRoute({ component: Component }: { component: React.ComponentType }
 
 function EmployeeRoute({ component: Component }: { component: React.ComponentType }) {
   const { user, loading } = useAuth();
+  const [, navigate] = useLocation();
+
+  // Handle redirects with useEffect to avoid calling hooks after early returns
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
@@ -53,8 +75,12 @@ function EmployeeRoute({ component: Component }: { component: React.ComponentTyp
   }
 
   if (!user) {
-    window.location.href = "/login";
-    return null;
+    // Return loading state while redirect happens
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   if (user.role !== "admin" && user.role !== "employee") {
