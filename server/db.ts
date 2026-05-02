@@ -196,7 +196,6 @@ export async function listShiftsByEmployee(employeeId: number): Promise<schema.S
 export async function deleteShift(shiftId: number): Promise<void> {
   const db = await getDb();
   if (!db) return;
-  const { ne } = await import("drizzle-orm");
   await db.delete(schema.shifts).where(eq(schema.shifts.id, shiftId));
 }
 
@@ -206,12 +205,12 @@ export async function hasActiveShift(employeeId: number): Promise<boolean> {
   const now = new Date();
   const dayOfWeek = now.getDay();
   const currentTime = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-  const { and: andOp, lte, gte } = await import("drizzle-orm");
+  const { lte, gte } = await import("drizzle-orm");
   const rows = await db
     .select()
     .from(schema.shifts)
     .where(
-      andOp(
+      and(
         eq(schema.shifts.employeeId, employeeId),
         eq(schema.shifts.dayOfWeek, dayOfWeek),
         lte(schema.shifts.startTime, currentTime),
