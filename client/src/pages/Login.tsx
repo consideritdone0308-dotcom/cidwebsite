@@ -20,16 +20,6 @@ export default function Login() {
   const { user, loading } = useAuth();
   const utils = trpc.useUtils();
 
-  // Redirect if already logged in
-  if (!loading && user) {
-    if (user.role === "admin") {
-      window.location.href = "/admin";
-    } else {
-      window.location.href = "/dashboard";
-    }
-    return null;
-  }
-
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: (data) => {
       utils.auth.me.invalidate();
@@ -55,6 +45,16 @@ export default function Login() {
     },
     onError: (err) => toast.error(err.message),
   });
+
+  // Redirect if already logged in
+  if (!loading && user) {
+    if (user.role === "admin") {
+      window.location.href = "/admin";
+    } else {
+      window.location.href = "/dashboard";
+    }
+    return null;
+  }
 
   const isPending = loginMutation.isPending || signupMutation.isPending;
 
